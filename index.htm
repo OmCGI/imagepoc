@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Image Capture Example</title>
+    <style>
+        #video {
+            width: 400px;
+            image-rendering: high-quality;
+
+            height: 300px;
+            border: 1px solid #ccc;
+        }
+
+        #captureBtn {
+            margin: 10px;
+            padding: 8px 16px;
+        }
+
+        #result {
+            margin-top: 10px;
+        }
+
+        img {
+            max-width: 1920px;
+            /* Ensure captured image displays at full resolution */
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Image Capture API Demo</h1>
+    <video id="video" autoplay playsinline></video><br>
+    <button id="captureBtn">Capture Image</button>
+    <div id="result"></div>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('captureBtn');
+        const resultDiv = document.getElementById('result');
+
+        // Start camera stream
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { exact: 1920 },
+                        height: { exact: 1080 },
+                        facingMode: { exact: "environment" },
+                    }
+                });
+                video.srcObject = stream;
+                return stream;
+            } catch (err) {
+                console.error("Error accessing camera:", err);
+                alert("Could not access camera. Please check permissions.");
+            }
+        }
+
+        // Capture image
+        async function captureImage() {
+            if (!video.srcObject) return;
+
+            const videoTrack = video.srcObject.getVideoTracks()[0];
+            if (!videoTrack) {
+                alert("No video track found!");
+                return;
+            }
+
+            try {
+                // Create a canvas to capture the frame
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert canvas to blob
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        // Display the captured image
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(blob);
+                        resultDiv.innerHTML = '';
+                        resultDiv.appendChild(img);
+
+                        // Optional: Upload to server
+                        // await uploadImage(blob);
+                    } else {
+                        alert("Failed to capture image!");
+                    }
+                }, 'image/png');
+            } catch (err) {
+                console.error("Capture failed:", err);
+                alert("Failed to capture image!");
+            }
+        }
+
+        // Initialize
+        (async () => {
+            await startCamera();
+            captureBtn.addEventListener('click', captureImage);
+        })();
+    </script>
+</body>
+
+</html>
